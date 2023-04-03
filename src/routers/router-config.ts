@@ -4,18 +4,19 @@ export const constantRoutes = [
     name: 'test',
     component: () => import('@/views/test/index.vue'),
     meta: {
-      title: '测试'
+      title: '测试',
+      showTab: true
     }
   }
   // {
-  //   path: '/',
+  //   path: '/home',
   //   name: 'home',
   //   component: () => import('@/views/home/index.vue'),
   //   meta: {
   //     title: '首页',
   //     showTab: true
   //   }
-  // },
+  // }
   // {
   //   path: '/my',
   //   name: 'my',

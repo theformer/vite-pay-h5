@@ -15,3 +15,11 @@ export const getMeetingById = (data: { id: number }) => {
     params: data
   })
 }
+//获取公告栏滚动条
+// export const getRegister = (data: { id: number }) => {
+//   return request<IMeeting[]>({
+//     url: '/api/v1/node/register',
+//     method: 'get',
+//     params: data
+//   })
+// }
