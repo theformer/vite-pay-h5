@@ -1,7 +1,6 @@
 @import 'mixin.scss';
 @import 'variables.scss';
 @import 'reset.scss';
-
 html,
 body,
 #app {
@@ -57,4 +56,10 @@ body {
       background-color: #fff;
     }
   }
+}
+.mt_20{
+  margin-top: 20px;
+}
+.mt_10{
+  margin-top: 10px;
 }

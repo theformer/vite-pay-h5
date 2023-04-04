@@ -26,7 +26,8 @@ export default ({ command, mode }) => {
             if (
               loaderContext.endsWith('assets/css/variables.scss') ||
               loaderContext.endsWith('assets/css/mixin.scss') ||
-              loaderContext.endsWith('assets/css/index.scss')
+              loaderContext.endsWith('assets/css/index.scss') ||
+              loaderContext.endsWith('assets/css/iconfont.scss')
             ) {
               return content
             }

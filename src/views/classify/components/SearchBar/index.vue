@@ -4,7 +4,6 @@
       <div class="search-bar-input">
         <van-icon name="search" size="25" color="#9b9b9b" />
         <span class="search-text">请输入你想搜索的</span>
-        <!--        <span class="search-btn">搜索</span>-->
       </div>
     </div>
 

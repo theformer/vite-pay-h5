@@ -1,16 +1,12 @@
 <template>
-  <van-tabbar v-model="active" active-color="#0125B1">
+  <van-tabbar z-index="9" v-model="active">
     <van-tabbar-item>
       <span>返回顶部</span>
     </van-tabbar-item>
     <van-tabbar-item icon="home-o" class="item-buy">
       <template #icon="props">
         <div class="buy-btn">
-          <img
-            style="width: 30px; height: 29px; margin-top: 3px"
-            :src="icon.classifyInactive"
-            alt="classify"
-          />
+          <img style="width: 30px; height: 29px" :src="icon.classifyInactive" alt="classify" />
           <span style="margin-left: 10px; color: red; font-weight: bolder">已购买</span>
         </div>
       </template>
@@ -32,18 +28,29 @@ const active = ref(0)
 <style scoped lang="scss">
 .van-tabbar {
   --van-tabbar-item-icon-margin-bottom: 5px;
-  --van-tabbar-height: 60px;
+  --van-tabbar-height: 40px;
   .buy-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 125px;
-    background: #e2f920;
-    border-radius: 25%;
-    height: 120%;
+    width: 124px;
+    height: 26px;
+    line-height: 29px;
+    border-radius: 10px 10px 10px 10px;
+    background-color: rgba(228, 251, 31, 1);
+    color: rgba(232, 13, 13, 1);
+    font-size: 20px;
+    text-align: center;
+    font-family: Arial;
+    border: 1px solid rgba(187, 187, 187, 1);
+    margin-top: 5px;
   }
   img {
     height: 22px;
+  }
+  .van-tabbar-item {
+    background-color: #028a58;
+    color: white;
   }
 }
 </style>
