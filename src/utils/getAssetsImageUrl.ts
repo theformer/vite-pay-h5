@@ -1,3 +1,6 @@
+import pako from 'pako'
+import md5 from 'js-md5'
+
 /**
  * 动态引入图片地址
  * @param url
@@ -84,4 +87,29 @@ export const createHash = function (hashLength: number) {
   }
 
   return hs.join('')
+}
+export const unzip = function (binData: any) {
+  return pako.ungzip(binData, {
+    to: 'string'
+  })
+  //return pako.inflate(binData, { to: 'string' })
+}
+export const XorDec = function (msg, key) {
+  const ml = (msg + '').length
+  const kl = (key + '').length
+  let pwd = ''
+  for (let i = 0; i < ml; i++) {
+    pwd += String.fromCharCode(msg[i].charCodeAt() ^ key[i % kl].charCodeAt())
+  }
+  return pwd
+}
+export const enc = function (decData: string) {
+  const XorEncData = XorDec(decData, md5(localStorage.getItem('hash')))
+  return zip(XorEncData)
+}
+export const zip = function (str: string | ArrayBuffer) {
+  const binaryString = pako.gzip(str, {
+    to: 'string'
+  })
+  return binaryString
 }

@@ -57,11 +57,12 @@ class VAxios {
     this.instance.interceptors.response.use(
       (response: AxiosResponse<responseConfig>) => {
         requestCancel.removePending(response.config)
-
-        if (response.data.succ) {
+        console.log(response.data, '我杀发秘籍哦值')
+        if (response.data.code == 0) {
           this.loading && this.removeLoadingCount()
           return response.data
         } else {
+          console.log(response.data, '3333333')
           if (response.data.code == 503) {
             localStorage.removeItem('token')
             // Toast({

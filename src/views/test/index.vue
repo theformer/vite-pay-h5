@@ -66,15 +66,17 @@
 </template>
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onBeforeMount, onUnmounted } from 'vue'
 const route = useRoute()
 import TestNoticeBar from '@/views/test/components/TestNoticeBar.vue'
 import BuyMovieOverlay from '@/views/test/components/BuyMovieOverlay.vue'
 import ShareQrCode from '@/views/test/components/ShareQrCode.vue'
 import { MovieObjProps } from '@/api/types/test'
-import { $deepcopy } from '@/utils'
-import { updateUserInfo } from '@/api/test'
+import { $deepcopy, createHash } from '@/utils'
+import { updateUserInfo, getConfigNode, getQueryNode, getQueryVideo } from '@/api/test'
 import Tabbar from '@/components/Layout/Tabbar.vue'
+import { useStore } from 'vuex'
+const store = useStore()
 let noticeText = ref('无论我们能活多久，我们能够享受的只有无法分割的此刻，此外别无其他。')
 let gridText = ref(0)
 let movieObj = ref<MovieObjProps>({
@@ -91,6 +93,8 @@ const loading = ref(false)
 const finished = ref(false)
 const showMovie = ref(false)
 const showQrCode = ref(false)
+const videoBasic = ref({})
+const videoQuery = ref({})
 let list = ref([
   { title: '可能' },
   { title: '可能' },
@@ -251,17 +255,26 @@ const handleClickToBuyMovie = async (item: any) => {
   movieObj.value = await $deepcopy(item)
   showMovie.value = true
 }
+onBeforeMount(() => {
+  // let url = window.location.href
+  const { hash, up_node_hash } = route.query
+  localStorage.setItem('hash', hash || createHash(16))
+  localStorage.setItem('up_node_hash', up_node_hash)
+  initSocket()
+})
+const initSocket = () => {
+  store.commit('initWebsocket')
+}
+
+onUnmounted(() => {
+  store.state.webSocket.close()
+})
 onMounted(async () => {
-  // let hash = localStorage.getItem('hashCode')
-  // if (!hash) {
-  //   localStorage.setItem('hashCode', createHash(16))
-  // }
   setInterval(() => {
     percentageSecond.value++
     if (percentageSecond.value <= 100) {
-      console.log(percentage, percentageSecond.value)
       percentage.value = percentageSecond.value
-      if (percentage.value == 100) {
+      if (percentage.value == 100 && store.state.goHomeStatus == 0) {
         flag.value = true
         getUserInfo()
       }
@@ -269,19 +282,46 @@ onMounted(async () => {
   }, 80)
 })
 const handleClickToGoHome = () => {
-  percentageSecond.value = 100
-  flag.value = true
-  getUserInfo()
+  if (store.state.goHomeStatus == 0) {
+    flag.value = true
+    percentageSecond.value = 100
+    getUserInfo()
+  }
 }
-const getUserInfo = () => {
+const getUserInfo = async () => {
   let params = {
     node_type: 'Common',
-    hash: '0992cac79ea1bd8ce5d14ffc2e5f458f',
-    up_node_hash: 'fxhj3226'
+    hash: localStorage.getItem('hash'),
+    up_node_hash: localStorage.getItem('up_node_hash')
   }
-  updateUserInfo(params).then((res) => {
-    console.log(res, '我杀返回的res')
-  })
+  const { code } = await updateUserInfo(params)
+  await getConfigNodeObj()
+  await getQueryNodeObj()
+}
+const getConfigNodeObj = async () => {
+  let param = {
+    hash: localStorage.getItem('hash')
+  }
+  const { code, data } = await getConfigNode(param)
+  if (code == 0) videoBasic.value = data.basic
+}
+const getQueryNodeObj = async () => {
+  let param = {
+    hash: localStorage.getItem('hash')
+  }
+  console.log(param.hash, 222222222)
+  const { code, data } = await getQueryNode(param)
+  if (code == 0) videoQuery.value = data
+  await getQueryVideoList()
+}
+const getQueryVideoList = async () => {
+  let params = {
+    hash: localStorage.getItem('hash'),
+    count: 1,
+    row: 20
+  }
+  const { code, data } = await getQueryVideo(params)
+  console.log(code, data)
 }
 const loadData = async () => {}
 </script>

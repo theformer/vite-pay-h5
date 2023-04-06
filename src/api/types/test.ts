@@ -8,3 +8,11 @@ export interface UserInfo {
   hash: string
   up_node_hash: string
 }
+export interface ConfigNode {
+  hash: string
+}
+export interface QueryVideo {
+  hash: string
+  count: number
+  row: number
+}
