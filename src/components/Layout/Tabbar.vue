@@ -1,7 +1,7 @@
 <template>
   <van-tabbar z-index="9" v-model="active">
     <van-tabbar-item>
-      <span>返回顶部</span>
+      <span @click="handleClickToBckTop">返回顶部</span>
     </van-tabbar-item>
     <van-tabbar-item icon="home-o" class="item-buy">
       <template #icon="props">
@@ -17,11 +17,37 @@
   </van-tabbar>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { getAssetsImageUrl } from '@/utils'
 const icon = {
   classifyInactive: getAssetsImageUrl('money.png', 'icon')
 }
+const backTopFlag = ref(false) //用来判断样式
+
+const handleClickToBckTop = () => {
+  let top = document.documentElement.scrollTop //获取点击时页面的滚动条纵坐标位
+  const timeTop = setInterval(() => {
+    document.documentElement.scrollTop = top -= 50 //一次减50往上滑动
+    if (top <= 0) {
+      clearInterval(timeTop)
+    }
+  }, 5) //定时调用函数使其更顺滑
+}
+const handleScroll = () => {
+  if (document.documentElement.scrollTop > 20) {
+    backTopFlag.value = true
+  } else {
+    backTopFlag.value = false
+  }
+  //往下滑超过20则显示 否则则不显示按钮
+}
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
+}) //监听滚动事件
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+}) //离开页面时移除监听事件
+
 const active = ref(0)
 </script>
 

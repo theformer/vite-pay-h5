@@ -17,7 +17,7 @@ const router = createRouter({
 
 // router.beforeEach(async (to, from, next) => {
 // const token = localStorage.getItem('token') || null
-// const user = await getDetaios(localStorage.getItem('user') || null)
+
 // console.log(!token, user)
 // if (!token || user) {
 //   if (to.path == '/my') {

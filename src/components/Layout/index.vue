@@ -7,12 +7,10 @@
       <component :is="Component" v-if="!route.meta.keepAlive" :key="route.name" />
       <Dialog ref="dialog" @close="close" :diaShow="diaShow" />
     </router-view>
-    <Tabbar v-if="showTab" />
   </div>
 </template>
 
 <script lang="ts" setup>
-import Tabbar from './Tabbar.vue'
 import { useRoute } from 'vue-router'
 import { computed, onBeforeMount, onMounted } from 'vue'
 import Dialog from '@/views/home/components/Dialog.vue'

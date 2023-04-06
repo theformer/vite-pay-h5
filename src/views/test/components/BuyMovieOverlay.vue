@@ -1,5 +1,5 @@
 <template>
-  <van-overlay z-index="999" :show="props.show" @click="emit('close')">
+  <van-popup z-index="999" style="background: none" :show="props.show">
     <div class="wrapper" @click.stop>
       <img class="main-img" src="@/assets/images/bronze.png" alt="" />
       <van-button class="title-info" size="large">{{ props.title }}</van-button>
@@ -12,18 +12,22 @@
           <img class="wx" src="@/assets/icon/wx.png" alt="" />
           <span style="color: #3db993">微信付款</span>
         </div>
-        <!--        <van-button class="ali iconfont icon-weixin">支付宝付款</van-button>-->
-        <!--        <van-button class="wx iconfont icon-zhifubao">微信付款</van-button>-->
       </div>
-      <van-button class="money-see title-info mt_20" size="large">5元观看</van-button>
-      <van-button class="money-see title-info mt_10" size="large">XXX元天无限看</van-button>
-      <van-button class="money-see title-info mt_10" size="large">X金币观看(剩余XXXX)</van-button>
-      <van-button class="money-see title-info mt_10" size="large">充值VIP(更优惠)</van-button>
-      <van-button class="money-see title-info mt_10" style="color: red" size="large"
-        >暂不需要(关闭窗口)</van-button
-      >
+      <div style="height: 260px; overflow-y: scroll">
+        <van-button class="money-see title-info mt_20" size="large">5元观看</van-button>
+        <van-button class="money-see title-info mt_10" size="large">XXX元天无限看</van-button>
+        <van-button class="money-see title-info mt_10" size="large">X金币观看(剩余XXXX)</van-button>
+        <van-button class="money-see title-info mt_10" size="large">充值VIP(更优惠)</van-button>
+        <van-button
+          @click="emit('close')"
+          class="money-see title-info mt_10"
+          style="color: red"
+          size="large"
+          >暂不需要(关闭窗口)</van-button
+        >
+      </div>
     </div>
-  </van-overlay>
+  </van-popup>
 </template>
 
 <script setup lang="ts">
@@ -35,11 +39,10 @@ const props = defineProps<{
 }>()
 const emit = defineEmits(['close'])
 watch(
-  () => props.title,
+  () => props.show,
   (newVal, oldVal) => {
-    console.log('监听基本类型数据testStr')
-    console.log('new', newVal)
-    console.log('old', oldVal)
+    let height = document.documentElement.clientHeight
+    console.log(height, 1111)
   }
 )
 </script>
@@ -50,7 +53,7 @@ watch(
   padding: 12px;
   margin-top: 100px;
   height: 100%;
-  overflow-y: auto;
+  overflow: auto;
   .main-img {
     height: 160px;
     width: 100%;
