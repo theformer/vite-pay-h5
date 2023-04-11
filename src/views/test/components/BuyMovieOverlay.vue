@@ -1,8 +1,10 @@
 <template>
   <van-popup z-index="999" style="background: none" :show="props.show">
     <div class="wrapper" @click.stop>
-      <img class="main-img" src="@/assets/images/bronze.png" alt="" />
-      <van-button class="title-info" size="large">{{ props.title }}</van-button>
+      <img class="main-img" :src="props.imgUrl" alt="" @click="emit('seeMovie')" />
+      <van-button class="title-info title-tow" size="large" @click="emit('seeMovie')">{{
+        props.title
+      }}</van-button>
       <div style="display: flex; justify-content: space-between; margin-top: 8px" class="pay-btn">
         <div>
           <img class="ali" src="@/assets/icon/ali.png" alt="" />
@@ -14,10 +16,18 @@
         </div>
       </div>
       <div style="height: 260px; overflow-y: scroll">
-        <van-button class="money-see title-info mt_20" size="large">5元观看</van-button>
-        <van-button class="money-see title-info mt_10" size="large">XXX元天无限看</van-button>
-        <van-button class="money-see title-info mt_10" size="large">X金币观看(剩余XXXX)</van-button>
-        <van-button class="money-see title-info mt_10" size="large">充值VIP(更优惠)</van-button>
+        <van-button class="money-see title-info mt_20" size="large"
+          >{{ props.userMoney }}元观看</van-button
+        >
+        <van-button class="money-see title-info mt_10" size="large" @click="handleClickToVip"
+          >XXX元天无限看</van-button
+        >
+        <van-button class="money-see title-info mt_10" size="large"
+          >{{ props.userGold }}金币观看(剩余{{ userAllGold }})</van-button
+        >
+        <van-button class="money-see title-info mt_10" size="large" @click="handleClickToVip"
+          >充值VIP(更优惠)</van-button
+        >
         <van-button
           @click="emit('close')"
           class="money-see title-info mt_10"
@@ -36,8 +46,14 @@ const props = defineProps<{
   show: boolean
   title: string
   imgUrl: string
+  userGold: string
+  userMoney: string
+  userAllGold: number
 }>()
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'toVip', 'seeMovie'])
+const handleClickToVip = () => {
+  emit('toVip')
+}
 watch(
   () => props.show,
   (newVal, oldVal) => {
@@ -58,6 +74,13 @@ watch(
     height: 160px;
     width: 100%;
     display: inline-block;
+  }
+  .title-tow {
+    ::v-deep {
+      .van-button__text {
+        @include text-overflow(2);
+      }
+    }
   }
   .title-info {
     color: red;

@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import { ConfigNode, QueryVideo, UserInfo } from '@/api/types/test'
+import { ComplaintCreate, ComplaintVideo, ConfigNode, QueryVideo, UserInfo } from '@/api/types/test'
 
 export const updateUserInfo = (data: Partial<UserInfo>) => {
   return request({
@@ -27,7 +27,23 @@ export const getQueryNode = (data: Partial<ConfigNode>) => {
 //查找节点视频
 export const getQueryVideo = (data: Partial<QueryVideo>) => {
   return request({
-    url: '/api/1v/node/queryVideo',
+    url: '/api/v1/node/queryVideo',
+    method: 'post',
+    data
+  })
+}
+//查询投诉
+export const getComplaintVideo = (data: Partial<ComplaintVideo>) => {
+  return request({
+    url: '/api/v1/complaint/node/query',
+    method: 'post',
+    data
+  })
+}
+//创建投诉
+export const getComplaintCreate = (data: Partial<ComplaintCreate>) => {
+  return request({
+    url: '/api/v1/complaint/create',
     method: 'post',
     data
   })

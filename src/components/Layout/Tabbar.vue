@@ -12,12 +12,13 @@
       </template>
     </van-tabbar-item>
     <van-tabbar-item>
-      <span>订单投诉</span>
+      <span @click="handleClickToComplaint">订单投诉</span>
     </van-tabbar-item>
   </van-tabbar>
 </template>
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+const emit = defineEmits(['update'])
 import { getAssetsImageUrl } from '@/utils'
 const icon = {
   classifyInactive: getAssetsImageUrl('money.png', 'icon')
@@ -40,6 +41,9 @@ const handleScroll = () => {
     backTopFlag.value = false
   }
   //往下滑超过20则显示 否则则不显示按钮
+}
+const handleClickToComplaint = () => {
+  emit('update')
 }
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)

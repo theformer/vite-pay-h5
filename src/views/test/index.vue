@@ -1,63 +1,84 @@
 <template>
   <div v-if="flag">
-    <TestNoticeBar :text="noticeText" />
+    <TestNoticeBar :text="videoBasic.announcement" />
     <div class="grid-list">
       <div
-        class="item-list"
+        class="item-list list-text"
         :class="gridText == index ? 'activeText' : ''"
-        v-for="(item, index) in list"
+        v-for="(item, index) in videoBasic.searchClassify"
         :key="index"
-        @click="handleClickGridText(index)"
+        @click="handleClickGridText(index, item)"
       >
-        {{ item.title }}
+        {{ item }}
       </div>
       <div class="search-form">
         <span class="freeMovie" @click="showQrCode = true">免费电影</span>
         <van-search class="search-frame" v-model="searchVal" placeholder="请输入搜索关键词" />
-        <span class="search-ant">搜索</span>
+        <span class="search-ant" @click="handleClickToSearch">搜索</span>
       </div>
     </div>
-    <div class="video-play"></div>
-    <div class="movie-list">
-      <van-list
-        v-model:loading="loading"
-        :finished="finished"
-        finished-text="没有更多了"
-        @load="loadData"
-        :immediate-check="false"
-      >
-        <div class="list-item" v-for="(item, index) in movieList" :key="index">
-          <div class="item-watchTime">
-            <img src="@/assets/icon/watch.png" alt="" />
-            <span>{{ item.watchTime }}</span>
-          </div>
-          <div class="item-number" v-if="1 != 1">
-            <span>{{ `已有${item.number}付费` }}</span>
-            <span style="color: red">{{ item.money }}</span
-            >元观看
-          </div>
-          <div v-else class="item-number" style="text-align: center; color: red; width: 95%">
-            有效日期 ：2023.3.3日失效
-          </div>
-          <img
-            @click="handleClickToBuyMovie(item)"
-            class="movie-cover"
-            src="@/assets/images/bronze.png"
-          />
-          <div class="item-description">{{ item.description }}</div>
-        </div>
-      </van-list>
-      <BuyMovieOverlay
-        v-if="showMovie"
-        :show="showMovie"
-        :title="movieObj.title"
-        :img-url="movieObj.path"
-        @close="closeOverlay"
-      />
-      <ShareQrCode v-if="showQrCode" :show="showQrCode" @close="closeShareQrCode" />
+    <div v-if="moviePlayStatus" class="">
+      <AccounBbinding :url="posterPlayUrl" :title="movieObj.title" />
     </div>
-    <Tabbar v-if="showTab" />
+    <div v-if="!complaintStatus">
+      <div class="video-play"></div>
+      <div class="movie-list">
+        <van-list
+          v-model:loading="loading"
+          :finished="finished"
+          :offset="100"
+          finished-text="没有更多了"
+          @load="loadData"
+        >
+          <div class="list-item" v-for="(item, index) in movieList" :key="index">
+            <div class="item-watchTime">
+              <img style="margin-right: 3px" src="@/assets/icon/watch.png" alt="" />
+              <span style="padding-right: 2px">{{ secTotime(item.duration) }}</span>
+            </div>
+            <div class="item-number" v-if="item.exp == 0">
+              <span>{{ `已有${item.view}人付费` }}</span>
+              <span style="color: red">{{ item?.buyInfo.useMoney }}</span
+              >元观看
+            </div>
+            <div v-else class="item-number" style="text-align: center; color: red; width: 95%">
+              有效日期 ：{{ item.exp }}日失效
+            </div>
+            <img @click="handleClickToBuyMovie(item)" class="movie-cover" :src="item.url" />
+            <div class="item-description">{{ item.title }}</div>
+          </div>
+        </van-list>
+        <BuyMovieOverlay
+          v-if="showMovie"
+          :show="showMovie"
+          :title="movieObj.title"
+          :img-url="movieObj.url"
+          :user-money="movieObj.buyInfo?.useMoney"
+          :user-gold="movieObj.buyInfo?.useGold"
+          :user-all-gold="userGold"
+          @see-movie="handleClickSeeMovie"
+          @to-vip="handleClickToVip"
+          @close="closeOverlay"
+        />
+        <ShareQrCode v-if="showQrCode" :show="showQrCode" @close="closeShareQrCode" />
+      </div>
+    </div>
+    <div v-else>
+      <div class="complaint background-list">
+        <div
+          style="font-weight: 600"
+          class="list-text border-right"
+          @click="handleClickComplaint(index, item)"
+          v-for="(item, index) in complaintList"
+          :class="complaintIndex == index ? 'activeText' : ''"
+        >
+          {{ item.title }}
+        </div>
+      </div>
+      <component :is="tabs[complaintText]" class="tab"></component>
+    </div>
+    <Tabbar v-if="showTab" @update="handleClickToChangeComplaintStatus" />
   </div>
+
   <div v-else class="loading">
     <div class="loading-text">正在加载中</div>
     <van-progress class="loading-progress" troke-width="8" :percentage="percentage" />
@@ -71,18 +92,35 @@ const route = useRoute()
 import TestNoticeBar from '@/views/test/components/TestNoticeBar.vue'
 import BuyMovieOverlay from '@/views/test/components/BuyMovieOverlay.vue'
 import ShareQrCode from '@/views/test/components/ShareQrCode.vue'
-import { MovieObjProps } from '@/api/types/test'
-import { $deepcopy, createHash } from '@/utils'
+import OrderComplaint from '@/views/test/components/OrderComplaint.vue'
+import VIPPay from '@/views/test/components/VIPPay.vue'
+import GoldPay from '@/views/test/components/GoldPay.vue'
+import MessageList from '@/views/test/components/MessageList.vue'
+import AccountInfo from '@/views/test/components/AccountInfo.vue'
+import AccounBbinding from '@/views/test/components/AccounBbinding.vue'
+import { MovieObjProps, VideoBasic } from '@/api/types/test'
+import { $deepcopy, createHash, secTotime } from '@/utils'
 import { updateUserInfo, getConfigNode, getQueryNode, getQueryVideo } from '@/api/test'
 import Tabbar from '@/components/Layout/Tabbar.vue'
 import { useStore } from 'vuex'
 const store = useStore()
-let noticeText = ref('无论我们能活多久，我们能够享受的只有无法分割的此刻，此外别无其他。')
+const complaintStatus = ref(false)
+const moviePlayStatus = ref(false)
 let gridText = ref(0)
+let complaintIndex = ref(0)
+const posterPlayUrl = ref('')
 let movieObj = ref<MovieObjProps>({
   title: '',
-  imgUrl: ''
+  url: '',
+  poster: ''
 })
+const tabs = {
+  OrderComplaint,
+  VIPPay,
+  GoldPay,
+  MessageList,
+  AccountInfo
+}
 const showTab = computed(() => {
   return route.meta.showTab
 })
@@ -93,156 +131,45 @@ const loading = ref(false)
 const finished = ref(false)
 const showMovie = ref(false)
 const showQrCode = ref(false)
-const videoBasic = ref({})
+const classifyKeyWord = ref('')
+const videoBasic = ref<VideoBasic>({
+  announcement: '',
+  searchClassify: []
+})
 const videoQuery = ref({})
-let list = ref([
-  { title: '可能' },
-  { title: '可能' },
-  { title: '可能' },
-  { title: '可能' },
-  { title: '可能' },
-  { title: '可能' },
-  { title: '可能' },
-  { title: '可能' },
-  { title: '可能' },
-  { title: '可能' },
-  { title: '可能' },
-  { title: '可能' },
-  { title: '可能' }
+const complaintText = ref('OrderComplaint')
+const userGold = ref(0)
+const complaintList = ref([
+  { title: '订单', name: 'OrderComplaint' },
+  { title: 'VIP充值', name: 'VIPPay' },
+  { title: '金币充值', name: 'GoldPay' },
+  { title: '消息', name: 'MessageList' },
+  { title: '账户', name: 'AccountInfo' }
 ])
-let movieList = ref([
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  },
-  {
-    path: '@/images/bronze.png',
-    watchTime: '20:20',
-    number: '20',
-    money: '5',
-    description: '啊啊啊啊啊啊啊',
-    title: '我真是傻逼'
-  }
-])
+const searchQuery = {
+  count: 1,
+  row: 20,
+  hash: localStorage.getItem('hash'),
+  keywords: searchVal.value,
+  classifyKeyWord: ''
+}
+let movieList = ref([])
 let percentageSecond = ref(0)
-const handleClickGridText = (index: number) => {
+const handleClickToChangeComplaintStatus = () => {
+  complaintStatus.value = !complaintStatus.value
+}
+const handleClickGridText = (index: number, item: string) => {
+  if (complaintStatus.value) {
+    complaintStatus.value = !complaintStatus.value
+  }
   gridText.value = index
+  classifyKeyWord.value = item
+  handleClickToSearch()
+}
+const handleClickComplaint = (index: number, item: { name: string }) => {
+  console.log(index, item, '我是返回值')
+  complaintIndex.value = index
+  complaintText.value = item.name
 }
 const closeShareQrCode = () => {
   showQrCode.value = false
@@ -250,7 +177,17 @@ const closeShareQrCode = () => {
 const closeOverlay = () => {
   showMovie.value = false
 }
-
+const handleClickSeeMovie = () => {
+  moviePlayStatus.value = true
+  posterPlayUrl.value = movieObj.poster
+  closeOverlay()
+}
+const handleClickToVip = () => {
+  showMovie.value = false
+  complaintStatus.value = !complaintStatus.value
+  complaintIndex.value = 1
+  complaintText.value = 'VIPPay'
+}
 const handleClickToBuyMovie = async (item: any) => {
   movieObj.value = await $deepcopy(item)
   showMovie.value = true
@@ -303,27 +240,45 @@ const getConfigNodeObj = async () => {
     hash: localStorage.getItem('hash')
   }
   const { code, data } = await getConfigNode(param)
-  if (code == 0) videoBasic.value = data.basic
+  if (code == 0) {
+    data.basic.searchClassify = ['全部', ...JSON.parse(data.basic?.searchClassify)]
+    videoBasic.value = data.basic
+  }
 }
 const getQueryNodeObj = async () => {
   let param = {
     hash: localStorage.getItem('hash')
   }
-  console.log(param.hash, 222222222)
   const { code, data } = await getQueryNode(param)
   if (code == 0) videoQuery.value = data
-  await getQueryVideoList()
+  userGold.value = data.gold
+  localStorage.setItem('userInfo', JSON.stringify(data))
 }
-const getQueryVideoList = async () => {
-  let params = {
-    hash: localStorage.getItem('hash'),
-    count: 1,
-    row: 20
+const handleClickToSearch = () => {
+  movieList.value = []
+  searchQuery.keywords = searchVal.value
+  searchQuery.classifyKeyWord =
+    classifyKeyWord.value == '' || classifyKeyWord.value == '全部' ? '' : classifyKeyWord.value
+  searchQuery.count = 1
+  loadData()
+}
+const loadData = async () => {
+  finished.value = false
+  loading.value = true
+  console.log(searchQuery, '11111')
+  const { code, data } = await getQueryVideo(searchQuery)
+  if (code == 0 && data.length != 0) {
+    movieList.value = movieList.value.concat(data)
+    loading.value = false
+    searchQuery.count++
+    console.log(data.length, '我是返回过来的长度')
+    if (data.length < 20) finished.value = true
+  } else {
+    finished.value = true
+    loading.value = false
+    movieList.value = []
   }
-  const { code, data } = await getQueryVideo(params)
-  console.log(code, data)
 }
-const loadData = async () => {}
 </script>
 
 <style lang="scss" scoped>
@@ -371,11 +326,17 @@ const loadData = async () => {}
   padding: 6px 9px;
   display: flex;
   flex-direction: column;
-
+  height: 65vh;
+  //overflow-y: auto;
   .van-list {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
+    ::v-deep {
+      .van-list__finished-text {
+        width: 100%;
+      }
+    }
   }
   .list-item {
     position: relative;
@@ -468,7 +429,6 @@ const loadData = async () => {}
     text-align: center;
   }
 }
-
 .grid-list {
   display: flex;
   flex-direction: row;
@@ -477,20 +437,40 @@ const loadData = async () => {}
   background-color: #028958;
   color: white;
   padding: 10px;
-  .item-list {
-    width: 50px;
-    height: 29px;
-    line-height: 29px;
-    border-radius: 10px 10px 10px 10px;
-    color: white;
-    font-size: 16px;
-    text-align: center;
-    font-family: Arial;
-    margin-bottom: 5px;
+}
+.complaint {
+  display: flex;
+  justify-content: space-around;
+  border: 2px solid #bababb;
+  div {
+    flex-grow: 1;
   }
-  .activeText {
-    color: rgba(232, 13, 13, 1);
-    background-color: #e4fb1f;
+  &:last-child {
+    border-right: 0;
   }
+}
+.item-list {
+  width: 50px;
+  height: 29px;
+  line-height: 29px;
+  border-radius: 10px 10px 10px 10px;
+}
+.list-text {
+  border-radius: 10px 10px 10px 10px;
+  color: white;
+  font-size: 16px;
+  text-align: center;
+  font-family: Arial;
+  margin-bottom: 5px;
+}
+.border-right {
+  margin-bottom: 0;
+  padding: 10px 0;
+  border-radius: 0;
+  border-right: 2px solid #bababb;
+}
+.activeText {
+  color: rgba(232, 13, 13, 1);
+  background-color: #e4fb1f;
 }
 </style>

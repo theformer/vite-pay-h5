@@ -47,5 +47,6 @@ declare module '@vue/runtime-core' {
     VanSwipeItem: typeof import('vant/es')['SwipeItem']
     VanTabbar: typeof import('vant/es')['Tabbar']
     VanTabbarItem: typeof import('vant/es')['TabbarItem']
+    VideoPlay: typeof import('./src/components/VideoPlay/index.vue')['default']
   }
 }

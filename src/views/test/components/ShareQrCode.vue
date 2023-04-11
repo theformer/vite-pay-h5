@@ -54,7 +54,7 @@ const emit = defineEmits(['close'])
   border-bottom: #c1c1c1 3px solid;
 }
 .tips {
-  margin-left: 10px;
+  padding-left: 10px;
   height: 30px;
   line-height: 30px;
   color: red;
